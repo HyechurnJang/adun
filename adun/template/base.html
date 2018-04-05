@@ -1,0 +1,40 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="description" content="Aci Dynamic Utilization Nforcement">
+	<meta name="author" content="Hye-Churn Jang">
+	<title>ADUN</title>
+	<!-- <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}"> -->
+	
+	<link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+	<link href="{% static 'css/datatables.min.css' %}" rel="stylesheet">
+	<link href="{% static 'css/slider_checkbox.css' %}" rel="stylesheet">
+	<link href="{% static 'css/adun.css' %}" rel="stylesheet">
+
+</head>
+<body>
+
+	<script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
+	<script src="{% static 'js/datatables.min.js' %}"></script>
+	<script src="{% static 'js/bootstrap.min.js' %}"></script>
+	<script src="{% static 'js/adun.js' %}"></script>
+	
+	<div class="adun_menu">
+		<span class="adun_menu_block"><a href="/">Main</a></span>
+		<span class="adun_menu_block"><a href="/hist/">Tracker</a></span>
+		<span class="adun_menu_block"><a href="/macip/">MAC & IP</a></span>
+	</div>
+	
+	<div class="adun_title">
+		<h1>{% block title %}{% endblock %}</h1>
+	</div>
+	
+	<div class="adun_content">{% block content %}{% endblock %}</div>
+	
+</body>
+</html>

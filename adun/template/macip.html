@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}MAC & IP{% endblock %}
+
+{% block content %}
+
+<form method="post" action="/macip/create/" id="create-macip">
+	{% csrf_token %}
+	<div class="set-macip-wrap">
+		<div class="input-group mb-1">
+			<div class="input-group-prepend">
+				<span class="input-group-text set-macip-label">Tenant</span>
+			</div>
+			{{ form.macip_tn }}
+			<div class="input-group-prepend">
+				<span class="input-group-text set-macip-label">Profile</span>
+			</div>
+			{{ form.macip_ap }}
+			<div class="input-group-prepend">
+				<span class="input-group-text set-macip-label">EPG</span>
+			</div>
+			{{ form.macip_epg }}
+		</div>
+		
+		<div class="input-group mb-1">
+			<div class="input-group-prepend">
+				<span class="input-group-text set-macip-label">Name</span>
+			</div>
+			{{ form.macip_name }}
+			<div class="input-group-prepend">
+				<span class="input-group-text set-macip-label">Mac</span>
+			</div>
+			{{ form.macip_mac }}
+			<div class="input-group-prepend">
+				<span class="input-group-text set-macip-label">IP</span>
+			</div>
+			{{ form.macip_ip }}
+		</div>
+		
+		<button type="submit" class="btn btn-primary btn-macip-submit">Save</button>
+	</div>
+</form>
+
+<form method="post" action="" id="update-macip">
+	{% csrf_token %}
+	<input type="hidden" id="id_update_macip_name" name="update_macip_name"/>
+	<input type="hidden" id="id_update_macip_mac" name="update_macip_mac"/>
+	<input type="hidden" id="id_update_macip_ip" name="update_macip_ip"/>
+	<input type="submit" style="display:none;">
+</form>
+
+<form method="post" action="" id="delete-macip">
+	{% csrf_token %}
+	<input type="submit" style="display:none;">
+</form>
+
+<div class="container-fluid">
+	<table id="current_macip" class="table table-sm table-striped table-bordered adun_table" width="100%">
+		<thead class="thead-dark">
+			<tr>
+				<th>EPG Path</th>
+				<th>Name</th>
+				<th>MAC</th>
+				<th>IP</th>
+				<th>Option</th>
+			</tr>
+		</thead>
+	</table>
+</div>
+
+<style>
+.set-macip-wrap {
+	width: 80%;
+	padding: 10px;
+	margin: auto;
+	margin-bottom: 2.5em;
+	border: 1px solid #ced4da;
+	border-radius: .25rem;
+	min-width: 600px;
+}
+.set-macip-label {
+	width: 80px;
+}
+.btn-macip-submit {
+	width: 100%;
+}
+.btn-macip-option-wrap {
+	width: 100%;
+	text-align: center;
+}
+.btn-macip-option {
+	padding: .1rem .2rem;
+	font-size: .3rem;
+}
+</style>
+
+<script>
+$(document).ready(function() {
+    $("#current_macip").DataTable({"ajax": '/macip.json/'});
+});
+
+function update_macip(obj) {
+	var macip_id = obj.attr("macip_id");
+	$("#id_update_macip_name").val($("#macip-name-" + macip_id).val());
+	$("#id_update_macip_mac").val($("#macip-mac-" + macip_id).val());
+	$("#id_update_macip_ip").val($("#macip-ip-" + macip_id).val());
+	$("#update-macip").attr("action", "/macip/update/" + macip_id + "/").submit();
+};
+
+function delete_macip(obj) {
+	$("#delete-macip").attr("action", "/macip/delete/" + obj.attr("macip_id") + "/").submit();
+};
+</script>
+
+{% endblock %}

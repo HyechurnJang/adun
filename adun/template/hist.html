@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Tracker{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+	<h3>Endpoint Groups</h3>
+	<table id="current-epg" class="table table-sm table-striped table-bordered adun-table" width="100%">
+		<thead class="thead-dark">
+			<tr>
+				<th scope="col">Time Stamp</th>
+				<th scope="col">Status</th>
+				<th scope="col">EPG Path</th>
+			</tr>
+		</thead>
+	</table>
+	
+	<h3>Endpoints</h3>
+	<table id="current-ep" class="table table-sm table-striped table-bordered adun_table" width="100%">
+		<thead class="thead-dark">
+			<tr>
+				<th>Time Stamp</th>
+				<th>Status</th>
+				<th>EPG Path</th>
+				<th>MAC</th>
+				<th>IP</th>
+			</tr>
+		</thead>
+	</table>
+
+</div>
+
+<script>
+$(document).ready(function() {
+    $("#current-epg").DataTable({"ajax": '/history/epg/'});
+    $("#current-ep").DataTable({"ajax": '/history/ep/'});
+});
+</script>
+
+{% endblock %}
