@@ -5,7 +5,6 @@ Created on 2018. 3. 30.
 '''
 
 import json
-import inspect
 import datetime
 from json import JSONEncoder
 from pygics import Lock
@@ -176,12 +175,6 @@ class Tracker:
         self.ctrl.EPG.event(Tracker.EPGEvent(self))
         self.ctrl.Endpoint.event(Tracker.EPEvent(self))
         
-        self.dump()
-        
-    def dump(self):
-        print json.dumps(self.eps, indent=2, cls=Tracker.TrackerEncoder)
-        print json.dumps(self.macips, indent=2, cls=Tracker.TrackerEncoder)
-    
     def setEPGAC(self, epg_dn, ac=None, qvlan=None):
         if epg_dn not in self.epgs: return None
         epg = self.epgs[epg_dn]

@@ -17,21 +17,12 @@ class EngineAPI:
     def close(self):
         self.session.close()
     
-    def getEPG(self, id=None):
+    def getEPG(self, id=None, epg_wn=None):
         url = self.pipe + '/epg'
-        if id != None: url += '/%d' % id
+        if id != None: url += '?id=%d' % id
+        elif epg_wn != None: url += '?epg_wn="%s"' % epg_wn
         resp = self.session.get(url)
-        if resp.status_code != 200:
-            if id != None: return None
-            else: return []
-        data = resp.json()
-        if 'error' in data: raise Exception(data['error'])
-        return data
-    
-    def getEPGHist(self):
-        url = self.pipe + '/hist/epg'
-        resp = self.session.get(url)
-        if resp.status_code != 200: return []
+        if resp.status_code != 200: resp.raise_for_status()
         data = resp.json()
         if 'error' in data: raise Exception(data['error'])
         return data
@@ -41,19 +32,61 @@ class EngineAPI:
         if ac != None: data['ac'] = ac
         if qvlan != None: data['qvlan'] = qvlan
         if not data: return False
-        url = self.pipe + '/epg/%d' % id
+        url = self.pipe + '/epg?id=%d' % id
         resp = self.session.post(url, headers=self.headers, data=json.dumps(data))
-        if resp.status_code != 200: return False
+        if resp.status_code != 200: resp.raise_for_status()
         if 'error' in resp.json(): return False
         return True
     
-    def getEP(self, id=None):
+    def getEP(self, id=None, epg_wn=None):
         url = self.pipe + '/ep'
-        if id != None: url += '/%d' % id
+        if id != None: url += '?id=%d' % id
+        elif epg_wn != None: url += '?epg_wn="%s"' % epg_wn
         resp = self.session.get(url)
-        if resp.status_code != 200:
-            if id != None: return None
-            else: return []
+        if resp.status_code != 200: resp.raise_for_status()
+        data = resp.json()
+        if 'error' in data: raise Exception(data['error'])
+        return data
+    
+    def getMacIP(self, id=None, epg_wn=None):
+        url = self.pipe + '/macip'
+        if id != None: url += '?id=%d' % id
+        elif epg_wn != None: url += '?epg_wn="%s"' % epg_wn
+        resp = self.session.get(url)
+        if resp.status_code != 200: resp.raise_for_status()
+        data = resp.json()
+        if 'error' in data: raise Exception(data['error'])
+        return data
+    
+    def setMacIPwithID(self, id, mac, ip, name=None):
+        data = {'mac' : mac, 'ip' : ip}
+        if name != None: data['name'] = name
+        url = self.pipe + '/macip?id=%d' % id
+        resp = self.session.post(url, headers=self.headers, data=json.dumps(data))
+        if resp.status_code != 200: resp.raise_for_status()
+        if 'error' in resp.json(): return False
+        return True
+    
+    def setMacIPwithWN(self, epg_wn, mac, ip, name=None):
+        data = {'mac' : mac, 'ip' : ip}
+        if name != None: data['name'] = name
+        url = self.pipe + '/macip?epg_wn="%s"' % epg_wn
+        resp = self.session.post(url, headers=self.headers, data=json.dumps(data))
+        if resp.status_code != 200: resp.raise_for_status()
+        if 'error' in resp.json(): return False
+        return True
+    
+    def delMacIP(self, id):
+        url = self.pipe + '/macip?id=%d' % id
+        resp = self.session.delete(url)
+        if resp.status_code != 200: resp.raise_for_status()
+        if 'error' in resp.json(): return False
+        return True
+    
+    def getEPGHist(self):
+        url = self.pipe + '/hist/epg'
+        resp = self.session.get(url)
+        if resp.status_code != 200: resp.raise_for_status()
         data = resp.json()
         if 'error' in data: raise Exception(data['error'])
         return data
@@ -61,45 +94,25 @@ class EngineAPI:
     def getEPHist(self):
         url = self.pipe + '/hist/ep'
         resp = self.session.get(url)
-        if resp.status_code != 200: return []
+        if resp.status_code != 200: resp.raise_for_status()
         data = resp.json()
         if 'error' in data: raise Exception(data['error'])
         return data
-
-    def getMacIP(self, id=None):
-        url = self.pipe + '/macip'
-        if id != None: url += '/%d' % id
+    
+    def getEPGTopo(self):
+        url = self.pipe + '/topo/epg'
         resp = self.session.get(url)
-        if resp.status_code != 200:
-            if id != None: return None
-            else: return []
+        if resp.status_code != 200: resp.raise_for_status()
         data = resp.json()
         if 'error' in data: raise Exception(data['error'])
         return data
     
-    def setMacIPwithDN(self, tn, ap, epg, mac, ip, name=None):
-        data = {'tn' : tn, 'ap' : ap, 'epg' : epg, 'mac' : mac, 'ip' : ip}
-        if name != None: data['name'] = name
-        url = self.pipe + '/macip'
-        resp = self.session.post(url, headers=self.headers, data=json.dumps(data))
-        if resp.status_code != 200: return False
-        if 'error' in resp.json(): return False
-        return True
-    
-    def setMacIPwithID(self, id, mac, ip, name=None):
-        data = {'mac' : mac, 'ip' : ip}
-        if name != None: data['name'] = name
-        url = self.pipe + '/macip/%d' % id
-        resp = self.session.post(url, headers=self.headers, data=json.dumps(data))
-        if resp.status_code != 200: return False
-        if 'error' in resp.json(): return False
-        return True
-    
-    def delMacIP(self, id):
-        url = self.pipe + '/macip/%d' % id
-        resp = self.session.delete(url)
-        if resp.status_code != 200: return False
-        if 'error' in resp.json(): return False
-        return True
+    def getEPTopo(self, epg_wn):
+        url = self.pipe + '/topo/ep?epg_wn="%s"' % epg_wn
+        resp = self.session.get(url)
+        if resp.status_code != 200: resp.raise_for_status()
+        data = resp.json()
+        if 'error' in data: raise Exception(data['error'])
+        return data
 
 engine = EngineAPI()

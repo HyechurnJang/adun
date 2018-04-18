@@ -22,19 +22,11 @@
 	<script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
 	<script src="{% static 'js/datatables.min.js' %}"></script>
 	<script src="{% static 'js/bootstrap.min.js' %}"></script>
+	<script src="{% static 'js/d3.v3.js' %}"></script>
+	<script src="{% static 'js/d3.layout.js' %}"></script>
 	<script src="{% static 'js/adun.js' %}"></script>
 	
-	<div class="adun_menu">
-		<span class="adun_menu_block"><a href="/">Main</a></span>
-		<span class="adun_menu_block"><a href="/hist/">Tracker</a></span>
-		<span class="adun_menu_block"><a href="/macip/">MAC & IP</a></span>
-	</div>
-	
-	<div class="adun_title">
-		<h1>{% block title %}{% endblock %}</h1>
-	</div>
-	
-	<div class="adun_content">{% block content %}{% endblock %}</div>
+	<div class="adun-content">{% block content %}{% endblock %}</div>
 	
 </body>
 </html>

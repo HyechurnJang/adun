@@ -18,27 +18,19 @@ from django.views.generic import RedirectView
 
 import views
 
-url_current = [
-    url(r'^epg/', views.curr_epg, name='curr_epg'),
-    url(r'^ep/', views.curr_ep, name='curr_ep'),
+url_epg_detail = [
+    url(r'^ep/(?P<ident>[\W\w]+)/', views.epg_ep, name='epg_ep'),
+    url(r'^macip/(?P<ident>[\W\w]+)/(?P<crud>(create|read|update|delete))/', views.epg_macip, name='epg_macip'),
+    url(r'^setting/', views.epg_setting, name='epg_setting')
 ]
 
-url_history = [
-    url(r'^epg/', views.hist_epg, name='hist_epg'),
-    url(r'^ep/', views.hist_ep, name='hist_ep'),
+url_detail = [
+    url(r'^epg/', include(url_epg_detail)),
 ]
 
 urlpatterns = [
     url(r'^favicon\.ico', RedirectView.as_view(url='/static/img/favicon.ico')),
-    
-    url(r'^current/', include(url_current)),
-    url(r'^history/', include(url_history)),
-    
-    url(r'^hist/$', views.hist, name='hist'),
-    
-    url(r'^macip\.(?P<accept>json)/', views.macip, name='macip_json'),
-    url(r'^macip/(?P<crud>\w+)/(?P<macip_id>\d+)?', views.macip, name='macip_crud'),
-    url(r'^macip/$', views.macip, name='macip'),
-    
+    url(r'^topo/(?P<target>(epg|ep))/((?P<ident>[\W\w]+)/)?', views.topo, name='topo'),
+    url(r'^detail/', include(url_detail)),
     url(r'^', views.main, name='main'),
 ]

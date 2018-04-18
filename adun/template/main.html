@@ -1,120 +1,697 @@
 {% extends 'base.html' %}
 
-{% block title %}Main Status{% endblock %}
-
 {% block content %}
 
-<div class="modal fade" id="set-epg-option" tabindex="-1" role="dialog" aria-labelledby="set-epg-option-title" aria-hidden="true">
-	<div class="modal-dialog modal-dialog-centered" role="document">
+<div class="modal fade" id="epg-detail-panel" tabindex="-1" role="dialog" aria-labelledby="epg-detail-panel-title" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered epg-detail-modal" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h5 class="modal-title" id="set-epg-option-title">Setting EPG</h5>
+				<h5 class="modal-title" id="epg-detail-panel-title"></h5>
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
 			
-			<form method="post" action="{% url 'main' %}">
-				{% csrf_token %}
-				<div class="modal-body">
-					<div class="set-epg-option-wrap">
-						{{ form.epg_id }}
-						<div class="set-epg-qvlan-wrap">
-							<label>Quarantine Vlan</label>
-							{{ form.epg_qvlan }}
-						</div>
-						<div class="set-epg-enforce-wrap">
-							<label>Enforcement</label>
-							<span>
-								<label class="slide-switch" for="id_epg_ac">
-					    			{{ form.epg_ac }}
-									<div class="slide-box round"></div>
-								</label>
-							</span>
-						</div>
+			<div class="modal-body epg-detail-modal-body">
+			
+				<ul class="nav nav-tabs" role="tablist">
+					<li class="nav-item">
+						<a class="nav-link active" id="epg-ep-tab" data-toggle="tab" href="#epg-ep-details" role="tab" aria-controls="epg-ep-details" aria-selected="true">Endpoints</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" id="epg-macip-tab" data-toggle="tab" href="#epg-macip-details" role="tab" aria-controls="epg-ep-details" aria-selected="false">MAC & IP</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" id="epg-setting-tab" data-toggle="tab" href="#epg-setting" role="tab" aria-controls="epg-setting" aria-selected="false">Setting</a>
+					</li>
+				</ul>
+				<div class="tab-content">
+					<div class="tab-pane fade show active" id="epg-ep-details" role="tabpanel" aria-labelledby="epg-ep-tab">
+						<table id="epg-ep-details-table" class="table table-sm table-striped table-bordered adun_table" width="100%">
+							<thead class="thead-dark">
+								<tr>
+									<th>MAC</th>
+									<th>IP</th>
+									<th>Enforce</th>
+								</tr>
+							</thead>
+						</table>
+					</div>
+					<div class="tab-pane fade" id="epg-macip-details" role="tabpanel" aria-labelledby="epg-macip-tab">
+						<table id="epg-macip-details-table" class="table table-sm table-striped table-bordered adun_table" width="100%">
+							<thead class="thead-dark">
+								<tr>
+									<th>Name</th>
+									<th>MAC</th>
+									<th>IP</th>
+									<th>Option</th>
+								</tr>
+							</thead>
+							<tfoot>
+								<tr>
+									<td><input type="text" class="input-epg-detail-macip" id="epg-create-macip-name"/></td>
+									<td><input type="text" class="input-epg-detail-macip" id="epg-create-macip-mac"/></td>
+									<td><input type="text" class="input-epg-detail-macip" id="epg-create-macip-ip"/></td>
+									<td>
+									<div class="btn-epg-detail-macip-wrap">
+									<button type="button" class="btn btn-outline-success btn-epg-create-macip" onclick="createMacIP();">Add</button>
+									</div>
+									</td>
+								</tr>
+							</tfoot>
+						</table>
+					</div>
+					<div class="tab-pane fade" id="epg-setting" role="tabpanel" aria-labelledby="epg-setting-tab">
+						<form method="post" action="{% url 'epg_setting' %}">
+							{% csrf_token %}
+							{{ epg_form.epg_id }}
+							<div class="container-fluid epg-qvlan-wrap">
+								<label>Quarantine Vlan</label>
+								{{ epg_form.epg_qvlan }}
+							</div>
+							<div class="container-fluid epg-enforce-wrap">
+								<label>Enforcement</label>
+								<span>
+									<label class="slide-switch" for="id_epg_ac">
+						    			{{ epg_form.epg_ac }}
+										<div class="slide-box round"></div>
+									</label>
+								</span>
+							</div>
+							<div class="container-fluid epg-submit-wrap">
+								<button type="submit" class="btn btn-primary">Save</button>
+							</div>
+						</form>
 					</div>
 				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-					<button type="submit" class="btn btn-primary">Save</button>
-				</div>
-			</form>
 			
+			</div>
+			
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+			</div>
 		</div>
 	</div>
 </div>
 
-<div class="container-fluid">
-	<h3>Endpoint Groups</h3>
-	<table id="current-epg" class="table table-sm table-striped table-bordered adun-table" width="100%">
-		<thead class="thead-dark">
-			<tr>
-				<th scope="col">EPG Path</th>
-				<th scope="col">Enforce Mode</th>
-				<th scope="col">Enforce Status</th>
-				<th scope="col"></th>
-			</tr>
-		</thead>
-	</table>
-	
-	<h3>Endpoints</h3>
-	<table id="current-ep" class="table table-sm table-striped table-bordered adun_table" width="100%">
-		<thead class="thead-dark">
-			<tr>
-				<th>EPG Path</th>
-				<th>Path</th>
-				<th>MAC</th>
-				<th>IP</th>
-				<th>Tracking Status</th>
-				<th>Time Stamp</th>
-				<th>Enforce</th>
-			</tr>
-		</thead>
-	</table>
-
+<div class="modal fade" id="aci-detail-panel" tabindex="-1" role="dialog" aria-labelledby="aci-detail-panel-title" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered aci-detail-modal" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="aci-detail-panel-title">ACI Details</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body aci-detail-modal-body">
+				<div class="aci-detail-macip-table">
+					<h3>MAC & IP</h3>
+					
+					<table id="aci-detail-macip" class="table table-sm table-striped table-bordered adun_table" width="100%">
+						<thead class="thead-dark">
+							<tr>
+								<th>EPG Path</th>
+								<th>Name</th>
+								<th>MAC</th>
+								<th>IP</th>
+								<th>Option</th>
+							</tr>
+						</thead>
+					</table>
+					
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
 </div>
 
-<style>
-.btn-epg-option-wrap {
-	width: 100%;
-	text-align: center;
-}
-.btn-epg-option {
-	padding: .1rem .2rem;
-	font-size: .3rem;
-}
-.set-epg-option-wrap {
-	width: 100%;
-}
-.set-epg-qvlan-wrap {
-	width: 100%;
-}
-.set-epg-qvlan-wrap > input {
-	float: right;
-}
-.set-epg-enforce-wrap {
-	width: 100%;
-}
-.set-epg-enforce-wrap > span {
-	float: right;
-}
-</style>
+<div id="topology"></div>
 
 <script>
-$(document).ready(function() {
-    $("#current-epg").DataTable({"ajax": '/current/epg/'});
-    $("#current-ep").DataTable({"ajax": '/current/ep/'});
-});
 
-function set_epg_option_value(obj) {
-	$("#id_epg_id").val(obj.attr("epg_id"));
-	$("#id_epg_qvlan").val(obj.attr("epg_qvlan"));	
-	if ( obj.attr("epg_ac") == "true" ) {
+var window_width = 0;
+var window_height = 0;
+var width = 0;
+var height = 0;
+var width_center = 0;
+var height_center = 0;
+var width_cols = 0;
+var height_cols = 0;
+var margin = null;
+var duration = null;
+var index = 0;
+var root = null;
+var tree = null;
+var diagonal = null;
+var vis = null;
+var curr_epg = null;
+
+function createMacIP() {
+	$.ajax({
+		type: "POST",
+		url: "/detail/epg/macip/" + curr_epg.wn + "/create/",
+		dataType: "json",
+		data: {
+			macip_name: $("#epg-create-macip-name").val(),
+			macip_mac: $("#epg-create-macip-mac").val(),
+			macip_ip: $("#epg-create-macip-ip").val(),
+		},
+		success : function(data) {
+			if (data.error) { window.alert("Add MAC & IP Failed!"); }
+			else {
+				$("#epg-macip-details-table").DataTable({
+					ajax: "/detail/epg/macip/" + curr_epg.wn + "/read/",
+					destroy: true,
+				});
+			}
+		},
+		error : function(error) {
+			window.alert("Add MAC & IP Failed!");
+		},
+		complete : function() {
+			$("#epg-create-macip-name").val("");
+			$("#epg-create-macip-mac").val("");
+			$("#epg-create-macip-ip").val("");
+		}
+	});
+}
+
+function updateMacIP(id) {
+	$.ajax({
+		type: "POST",
+		url: "/detail/epg/macip/" + id + "/update/",
+		dataType: "json",
+		data: {
+			macip_name: $("#epg-update-macip-name-" + id).val(),
+			macip_mac: $("#epg-update-macip-mac-" + id).val(),
+			macip_ip: $("#epg-update-macip-ip-" + id).val(),
+		},
+		success : function(data) {
+			if (data.error) { window.alert("Update MAC & IP Failed!"); }
+			else {
+				$("#epg-macip-details-table").DataTable({
+					ajax: "/detail/epg/macip/" + curr_epg.wn + "/read/",
+					destroy: true,
+				});
+			}
+		},
+		error : function(error) {
+			window.alert("Update MAC & IP Failed!");
+		}
+	});
+}
+
+function deleteMacIP(id) {
+	$.ajax({
+		type: "DELETE",
+		url: "/detail/epg/macip/" + id + "/delete/",
+		dataType: "json",
+		success : function(data) {
+			if (data.error) { window.alert("Delete MAC & IP Failed!"); }
+			else {
+				$("#epg-macip-details-table").DataTable({
+					ajax: "/detail/epg/macip/" + curr_epg.wn + "/read/",
+					destroy: true,
+				});
+			}
+		},
+		error : function(error) {
+			window.alert("Delete MAC & IP Failed!");
+		}
+	});
+}
+
+function showEPGDetail(epg) {
+	curr_epg = epg;
+	$("#epg-ep-details-table").DataTable({
+		ajax: "/detail/epg/ep/" + epg.wn + "/",
+		destroy: true,
+	});
+	$("#epg-macip-details-table").DataTable({
+		ajax: "/detail/epg/macip/" + epg.wn + "/read/",
+		destroy: true,
+	});
+	$("#epg-detail-panel-title").html("<strong>" + epg.name + " Details</strong>");
+	$("#id_epg_id").val(epg.id);
+	$("#id_epg_qvlan").val(epg.qvlan);
+	if (epg.ac) {
 		$("#id_epg_ac").prop("checked", true);
 	} else {
 		$("#id_epg_ac").prop("checked", false);
 	}
-};
+	$("#epg-ep-tab").tab("show");
+	$("#epg-detail-panel").modal("show");
+	curr_epg.menu = true;
+	update(curr_epg);
+}
+
+function hideEPGDetail() {
+	$("epg-detail-panel").modal("hide");
+	curr_epg.menu = false;
+	curr_epg.children = null;
+	update(curr_epg);
+}
+
+function showACIDetail() {
+	//$("#aci-detail-macip").DataTable({
+	//	ajax: "/macip.json/",
+	//	destroy: true,
+	//});
+	$("#aci-detail-panel").modal("show");
+	root.menu = true;
+	update(root);
+}
+
+function hideACIDetail() {
+	$("#aci-detail-panel").modal("hide");
+	root.menu = false;
+	update(root);
+}
+
+function toggle(d) {
+	if (d.children) {
+		d._children = d.children;
+		d.children = null;
+	} else {
+		d.children = d._children;
+		d._children = null;
+	}
+}
+
+function toggleAll(d) {
+	if (d.children) {
+		d.children.forEach(toggleAll);
+		toggle(d);
+	}
+}
+
+function actionClickEPG(epg) {
+	if (curr_epg && curr_epg != epg) {
+		curr_epg.menu = false;
+		curr_epg.children = null;
+	}
+	curr_epg = epg
+	
+	vis.transition()
+		.duration(duration)
+		.attr("transform", function(d) {
+			if (curr_epg && curr_epg.epcount > 0) {
+				var move_y = - (width_cols * 2);
+				var move_x = (height_center > curr_epg.x ? (height_center - curr_epg.x) * 0.7 : -((curr_epg.x - height_center) * 0.7));
+				return "translate(" + move_y + "," + move_x + ")";
+			}
+			return "translate(" + margin[1] + "," + margin[0] + ")";
+		});
+	
+	if (!epg.menu) {
+		if (epg.children) {
+			epg.children = null;
+			curr_epg = null;
+			update(epg);
+		} else {
+			$.ajax({
+				type: "GET",
+				url: "/topo/ep/" + epg.wn + "/",
+				dataType: "json",
+				success : function(data) {
+					epg.children = data.data;
+					epg.epcount = epg.children.length;
+					update(epg);
+				},
+				error : function(xhr, status, thrown) {
+					window.alert("Error!");
+					window.location.replace("/");
+				}
+			});
+		}
+	} else {
+		epg.children = null;
+		epg.menu = false;
+		update(epg);
+	}
+}
+
+function actionContextEPG(epg) {
+	if (!epg.menu) { showEPGDetail(epg); }
+	else { hideEPGDetail(); }
+}
+
+function actionContextACI() {
+	if (!root.menu) { showACIDetail();}
+	else { hideACIDetail(); }
+}
+
+function update(source) {
+	var nodes = tree.nodes(root).reverse();
+	nodes.forEach(function(d) { d.y = (width / 4) * d.depth; });
+	var node = vis.selectAll("g.node")
+		.data(nodes, function(d) { return d.id || (d.id = "topo-node-" + ++index); });
+	
+	// Define Action
+	var nodeEnter = node.enter().append("svg:g")
+		.attr("class", "node")
+		.attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
+		.on("click", function(d) {
+			d3.event.stopPropagation();
+			if (d.type == "epg") {
+				d3.select(this).moveToFront();
+				actionClickEPG(d);
+			} else if (d.type == "aci") {
+				d3.select(this).moveToFront();
+				actionContextACI(d);
+			} else {
+				toggle(d);
+				update(d);
+			}
+		})
+		.on("contextmenu", function(d, i) {
+			d3.event.preventDefault();
+			if (d.type == "epg") {
+				d3.select(this).moveToFront();
+				actionContextEPG(d);
+			} else if (d.type == "aci") {
+				d3.select(this).moveToFront();
+				actionContextACI(d);
+			}
+		});
+	
+	// Define Static Attributes
+	nodeEnter.append("svg:circle");
+	
+	nodeEnter.append("svg:text")
+		.text(function(d) { return d.name; })
+		.attr("dy", ".35em")
+		.attr("text-anchor", function(d) { return d.type != "ep" ? "end" : "start"; })
+		.style("font-weight", function(d) { return d.type != "ep" ? "bold" : "normal"; })
+		.style("font-size", function(d) { return d.type != "ep" ? "1.2em" : "1em"; });
+	
+	// Create Transition
+	var nodeUpdate = node.transition()
+		.duration(duration)
+		.attr("transform", function(d) {
+			//if (curr_epg) {
+			//	return "translate(" + d.y + "," + (height_center > curr_epg.x ? (height_center - curr_epg.x) + d.x : d.x - (curr_epg.x - height_center)) + ")";
+			//}
+			return "translate(" + d.y + "," + d.x + ")";
+		});
+	
+	// Define Dynamic Attributes
+	nodeUpdate.select("circle")
+		.attr("r", function(d) {
+			if (d.type == "epg") {
+				if (d.menu) { return 5000; }
+				else if (d.children) { return 30; }
+			} else if (d.type == "aci") {
+				if (d.menu) { return 5000; }
+			} else if (d.type == "ep") {
+				return 8;
+			}
+			return 12;
+		})
+		.style("fill", function(d) {
+			if (d.menu) {
+				return "#fff";
+			} else if (d._children) {
+				return "lightsteelblue";
+			} else if (d.type == "epg" && d.epcount > 0) {
+				if (d.ac) {
+					return "tomato";
+				}
+				return "lightsteelblue";
+			} else if (d.type == "ep" && d.blocked) {
+				return "red";
+			}
+			return "#fff";
+		})
+		.style("stroke", function(d) {
+			if (d.type == "epg" && d.ac) {
+				return "crimson";
+			} else if (d.type == "ep" && d.blocked) {
+				return "crimson";
+			}
+			return "steelblue";
+		});
+	
+	nodeUpdate.select("text")
+		.attr("x", function(d) {
+			if (d.type == "epg") {
+				if (d.menu) { return -5002; }
+				else if (d.children) { return -32; }
+			} else if (d.type == "aci") {
+				if (d.menu) { return -5002; }
+			} else if (d.type == "ep") {
+				return 10;
+			}
+			return -14;
+		});
+	
+	var nodeExit = node.exit().transition()
+		.duration(duration)
+		.attr("transform", function(d) {
+			return "translate(" + d.parent.y + "," + d.parent.x + ")";
+		})
+		.remove();
+	
+	nodeExit.select("circle")
+		.attr("r", 1e-6);
+	
+	nodeExit.select("text")
+		.style("fill-opacity", 1e-6);
+	
+	var link = vis.selectAll("path.link")
+		.data(tree.links(nodes), function(d) { return d.target.id; });
+	
+	link.enter().insert("svg:path", "g")
+		.attr("class", "link")
+		.attr("d", function(d) {
+			var o = {x: source.x0, y: source.y0};
+			return diagonal({source: o, target: o});
+		})
+		.transition()
+		.duration(duration)
+		.attr("d", diagonal);
+	
+	link.transition()
+		.duration(duration)
+		.attr("d", diagonal);
+	
+	link.exit().transition()
+		.duration(duration)
+		.attr("d", function(d) {
+			var o = {x: d.source.x, y: d.source.y};
+			return diagonal({source: o, target: o});
+		})
+		.remove();
+	
+	nodes.forEach(function(d) {
+		d.x0 = d.x;
+		d.y0 = d.y;
+	});
+}
+
+function toggleAll(d) {
+	if (d.children) {
+		d.children.forEach(toggleAll);
+		toggle(d);
+	}
+}
+
+$(window).resize(function() {
+});
+
+$(document).ready(function() {
+	window_width = $(document).width();
+	window_height = $(document).height();
+	margin = [20, 60, 20, 60];
+	width = window_width - margin[1] - margin[3];
+	height = window_height - margin[0] - margin[2];
+	width_center = width / 2;
+	height_center = height / 2;
+	width_cols = width / 5;
+	height_cols = width / 5;
+	margin = [20, width_cols / 2, 20, width_cols / 2];
+	duration = d3.event && d3.event.altKey ? 8000 : 800;
+	
+	tree = d3.layout.tree().size([height, width]);
+	diagonal = d3.svg.diagonal().projection(function(d) { return [d.y, d.x]; });
+	vis = d3.select("#topology")
+		.append("svg:svg")
+			.attr("width", window_width)
+			.attr("height", window_height)
+			.on("click", function(d) {
+				if (curr_epg) {
+					curr_epg.children = null;
+					curr_epg = null;
+					vis.transition()
+						.duration(duration)
+						.attr("transform", function(d) { return "translate(" + margin[1] + "," + margin[0] + ")"; });
+					update(root);
+				}
+			})
+			.append("svg:g")
+				.attr("transform", "translate(" + margin[1] + "," + margin[0] + ")");
+	
+	d3.selection.prototype.moveToFront = function() {
+		return this.each(function() {
+			this.parentNode.appendChild(this);
+		});
+	};
+	
+	d3.selection.prototype.moveToBack = function() {
+		return this.each(function() {
+			var firstChild = this.parentNode.firstChild;
+			if (firstChild) {
+				this.parentNode.insertBefore(this, firstChild);
+			}
+		});
+	};
+	
+	d3.json("/topo/epg/", function(json) {
+		root = json.data;
+		root.x0 = height_center;
+		root.y0 = 0;
+		update(root);
+	});
+	
+	$('#epg-detail-panel').on('hidden.bs.modal', function (e) {
+		curr_epg.menu = false;
+		curr_epg.children = null;
+		vis.transition()
+			.duration(duration)
+			.attr("transform", function(d) { return "translate(" + margin[1] + "," + margin[0] + ")"; });
+		update(curr_epg);
+	});
+	
+	$('#aci-detail-panel').on('hidden.bs.modal', function (e) {
+		root.menu = false;
+		update(root);
+	});
+});
 </script>
+
+<style>
+body {
+	overflow: hidden;
+}
+
+.node circle {
+	cursor: pointer;
+	fill: #fff;
+	stroke: steelblue;
+	stroke-width: 3px;
+}
+
+.node text {
+	cursor: pointer;
+}
+
+path.link {
+	fill: none;
+	stroke: #ccc;
+	stroke-width: 2px;
+}
+
+#topology {
+	margin: 0;
+	padding: 0;
+	font-size: 14px;
+}
+
+#epg-detail-panel {
+	overflow: auto;
+}
+
+.epg-detail-modal {
+	max-width: 1024px;
+	width: calc(100% - 100px);
+	min-width: 600px;
+}
+
+#epg-setting {
+	width: 100%;
+	margin-top: 1em;
+}
+.epg-qvlan-wrap {
+	margin-bottom: 0.5em;
+}
+.epg-qvlan-wrap > input {
+	float: right;
+	width: 60px;
+	text-align: center;
+}
+.epg-enforce-wrap {
+	margin-bottom: 0.5em;
+}
+.epg-enforce-wrap > span {
+	float: right;
+	width: 60px;
+}
+.epg-submit-wrap > button {
+	float: right;
+	width: 60px;
+}
+
+#epg-ep-details {
+	margin-top: 1em;
+	font-size: 0.7em;
+}
+#epg-ep-details-table {
+	text-align: center;
+}
+
+#epg-macip-details {
+	margin-top: 1em;
+	font-size: 0.7em;
+}
+#epg-macip-details-table {
+	text-align: center;
+}
+
+.input-epg-detail-macip {
+	width: 100%;
+	text-align: center;
+}
+
+.btn-epg-detail-macip-wrap {
+	width: 100%;
+	text-align: center;
+}
+.btn-epg-create-macip {
+	width: 12em;
+	padding: 0.18em 0.18em;
+	font-size: 1em;
+}
+
+.btn-epg-update-macip {
+	width: 6em;
+	padding: 0.18em 0.18em;
+	font-size: 1em;
+}
+
+.btn-epg-delete-macip {
+	width: 6em;
+	padding: 0.18em 0.18em;
+	font-size: 1em;
+}
+
+#aci-detail-panel {
+	overflow: auto;
+}
+
+.aci-detail-modal {
+	max-width: 1024px;
+	width: calc(100% - 100px);
+	min-width: 600px;
+}
+
+.aci-detail-macip-table {
+	margin-top: 10px;
+	font-size: 12px;
+}
+
+</style>
 
 {% endblock %}

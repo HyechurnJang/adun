@@ -36,6 +36,7 @@ class EPG(Model):
         return {
             'id' : self.id,
             'dn' : self.dn,
+            'wn' : self.dn.replace('/', '.'),
             'ac' : self.ac,
             'useg' : self.useg,
             'qvlan' : self.qvlan,
@@ -76,6 +77,7 @@ class EP(Model):
             'id' : self.id,
             'dn' : self.dn,
             'epg_dn' : self.epg_dn,
+            'epg_wn' : self.epg_dn.replace('/', '.'),
             'path_dn' : self.path_dn,
             'mac' : self.mac,
             'ip' : self.ip,
@@ -107,6 +109,7 @@ class MacIP(Model):
         return {
             'id' : self.id,
             'epg_dn' : self.epg_dn,
+            'epg_wn' : self.epg_dn.replace('/', '.'),
             'mac' : self.mac,
             'ip' : self.ip,
             'name' : self.name
