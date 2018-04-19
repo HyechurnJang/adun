@@ -11,4 +11,4 @@ ENV MDB_ROOT root
 ENV MDB_PASS 1234Qwer
 ENV QUARANTINE_VLAN 0
 
-CMD [ "python tracker.py -a $APIC_IP -u $APIC_USERNAME -p $APIC_PASSWORD -m $MDB_IP -r $MDB_ROOT -s $MDB_PASS -q $QUARANTINE_VLAN" ]
+CMD [ "cd /root/adun && python tracker.py -a $APIC_IP -u $APIC_USERNAME -p $APIC_PASSWORD -m $MDB_IP -r $MDB_ROOT -s $MDB_PASS -q $QUARANTINE_VLAN" ]

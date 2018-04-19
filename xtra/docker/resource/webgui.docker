@@ -10,4 +10,4 @@ ENV IP 0.0.0.0
 ENV PORT 80
 ENV ENGINE_IP adun_engine
 
-CMD [ "python manage.py runserver $IP:$PORT" ]
+CMD [ "cd /root/adun && python manage.py runserver $IP:$PORT" ]
