@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cd /root/adun
+git pull
+python tracker.py -a $APIC_IP -u $APIC_USERNAME -p $APIC_PASSWORD -m $MDB_IP -r $MDB_ROOT -s $MDB_PASS -q $QUARANTINE_VLAN
+

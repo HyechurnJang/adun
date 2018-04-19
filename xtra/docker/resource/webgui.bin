@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cd /root/adun
+git pull
+python manage.py runserver $IP:$PORT
+
