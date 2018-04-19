@@ -2,13 +2,13 @@ FROM python:2
 
 WORKDIR /root
 RUN git clone https://github.com/HyechurnJang/adun.git
-
-WORKDIR /root/adun
-RUN pip install --no-cache-dir -r xtra/docker/resource/engine.requirements
+RUN pip install --no-cache-dir -r adun/xtra/docker/resource/engine.requirements
+RUN cp /root/adun/xtra/docker/resource/engine.bin /usr/bin/adun_engine
+RUN chmod 755 /usr/bin/adun_engine
 
 ENV MDB_IP adun_db
 ENV MDB_ROOT root
 ENV MDB_PASS 1234Qwer
 ENV QUARANTINE_VLAN 0
 
-CMD [ "cd /root/adun && python tracker.py -a $APIC_IP -u $APIC_USERNAME -p $APIC_PASSWORD -m $MDB_IP -r $MDB_ROOT -s $MDB_PASS -q $QUARANTINE_VLAN" ]
+CMD [ "/usr/bin/adun_engine" ]

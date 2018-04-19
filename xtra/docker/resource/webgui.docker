@@ -2,12 +2,12 @@ FROM python:2
 
 WORKDIR /root
 RUN git clone https://github.com/HyechurnJang/adun.git
-
-WORKDIR /root/adun
-RUN pip install --no-cache-dir -r xtra/docker/resource/webgui.requirements
+RUN pip install --no-cache-dir -r adun/xtra/docker/resource/webgui.requirements
+RUN cp /root/adun/xtra/docker/resource/webgui.bin /usr/bin/adun_webgui
+RUN chmod 755 /usr/bin/adun_webgui
 
 ENV IP 0.0.0.0
 ENV PORT 80
 ENV ENGINE_IP adun_engine
 
-CMD [ "cd /root/adun && python manage.py runserver $IP:$PORT" ]
+CMD [ "/usr/bin/adun_webgui" ]
