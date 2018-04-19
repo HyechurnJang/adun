@@ -4,12 +4,19 @@ Created on 2018. 3. 5.
 @author: HyechurnJang
 '''
 
+import os
 import re
 from pygics import rest
 from model import EPG, EP, MacIP
 from core import Tracker
 
-tracker = Tracker('10.72.86.21', 'admin', '1234Qwer')
+tracker = Tracker(
+    os.environ.get('APIC_IP'),
+    os.environ.get('APIC_USERNAME'),
+    os.environ.get('APIC_PASSWORD'),
+    int(os.environ.get('QUARANTINE_VLAN')),
+    True if os.environ.get('APIC_DEBUG') == 'true' else False
+)
 
 #===============================================================================
 # Engine Rest API
@@ -179,16 +186,22 @@ def get_ep_topology(req, epg_wn):
     epg_dn = changeWNtoDN(epg_wn)
     if epg_dn in tracker.eps:
         for ep in tracker.eps[epg_dn].values():
-            ep_data = ep.toDict()
+            ep_data = {
+                '_id' : ep.id,
+                'id' : 'topo-ep-%d' % ep.id,
+                'type' : 'ep',
+                'epg_wn' : changeDNtoWN(ep.epg_dn),
+                'mac' : ep.mac,
+                'ip' : ep.ip,
+                'blocked' : ep.blocked
+            }
+            path_name = ep.path_dn.split('pathep-[')[1][:-1]
             if ep.epg_dn in tracker.macips and ep.mac in tracker.macips[ep.epg_dn]:
                 macip = tracker.macips[ep.epg_dn][ep.mac]
-                ep_data['name'] = '[%s] %s / %s' % (macip.name, ep.mac, ep.ip) if macip.name else '%s / %s' % (ep.mac, ep.ip)
+                ep_data['name'] = '[%s] %s / %s : %s' % (macip.name, ep.mac, ep.ip, path_name) if macip.name else '%s / %s : %s' % (ep.mac, ep.ip, path_name)
                 ep_data['mapped'] = macip.id
             else:
-                ep_data['name'] = '%s / %s' % (ep.mac, ep.ip)
+                ep_data['name'] = '%s / %s : %s' % (ep.mac, ep.ip, path_name)
                 ep_data['mapped'] = 0
-            ep_data['_id'] = ep_data['id']
-            ep_data['id'] = 'topo-ep-%d' % ep_data['id']
-            ep_data['type'] = 'ep'
             result.append(ep_data)
     return result

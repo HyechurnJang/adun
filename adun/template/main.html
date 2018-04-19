@@ -456,6 +456,7 @@ function update(source) {
 				} else {
 					unblockMacIP(d.mac, d.ip);
 				}
+			} else if (d.type == "path") {
 			} else {
 				toggle(d);
 				update(d);
@@ -478,17 +479,23 @@ function update(source) {
 	nodeEnter.append("svg:text")
 		.text(function(d) { return d.name; })
 		.attr("dy", ".35em")
-		.attr("text-anchor", function(d) { return d.type != "ep" ? "end" : "start"; })
-		.style("font-weight", function(d) { return d.type != "ep" ? "bold" : "normal"; })
-		.style("font-size", function(d) { return d.type != "ep" ? "1.2em" : "1em"; });
+		.attr("text-anchor", function(d) {
+			if (d.type == "ep") { return "start"; }
+			else { return "end"; }
+		})
+		.style("font-weight", function(d) {
+			if (d.type == "ep") { return "normal"; }
+			else { return "bold"; }
+		})
+		.style("font-size", function(d) {
+			if (d.type == "ep") { return "1em"; }
+			else { return "1.2em"; }
+		});
 	
 	// Create Transition
 	var nodeUpdate = node.transition()
 		.duration(duration)
 		.attr("transform", function(d) {
-			//if (curr_epg) {
-			//	return "translate(" + d.y + "," + (height_center > curr_epg.x ? (height_center - curr_epg.x) + d.x : d.x - (curr_epg.x - height_center)) + ")";
-			//}
 			return "translate(" + d.y + "," + d.x + ")";
 		});
 	

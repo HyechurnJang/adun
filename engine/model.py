@@ -4,10 +4,18 @@ Created on 2018. 3. 30.
 @author: HyechurnJang
 '''
 
+import os
 import re
 from sql import *
 
-db = Sql(File())
+db = Sql(
+    Mysql(
+        os.environ.get('MDB_IP'),
+        os.environ.get('MDB_ROOT'),
+        os.environ.get('MDB_PASS'),
+        'adun'
+    )
+)
 
 @model(db)
 class EPG(Model):

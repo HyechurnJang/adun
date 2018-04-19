@@ -115,6 +115,16 @@ class Tracker:
             self.tracker.lock.off()
     
     def __init__(self, apic_ip, username, password, qvlan=0, debug=False):
+        
+        print '''
+ADUN Engine Variables
+  - APIC CONN IP  : %s
+  - APIC USERNAME : %s
+  - APIC PASSWORD : %s
+  - APIC DEBUG : %s
+  - DEFAULT QVLAN : %d
+''' % (apic_ip, username, password, str(debug), qvlan)
+        
         self.epgs = {}
         self.eps = {}
         self.macips = {}

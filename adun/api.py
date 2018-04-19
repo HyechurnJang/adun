@@ -4,13 +4,14 @@ Created on 2018. 4. 2.
 @author: HyechurnJang
 '''
 
+import os
 import json
 import requests
 
 class EngineAPI:
     
-    def __init__(self, pipe='http://localhost:8080'):
-        self.pipe = pipe
+    def __init__(self, engine_ip):
+        self.pipe = 'http://%s:8080' % engine_ip
         self.headers = {'Content-Type' : 'application/json', 'Accept' : 'application/json'}
         self.session = requests.Session()
     
@@ -115,4 +116,4 @@ class EngineAPI:
         if 'error' in data: raise Exception(data['error'])
         return data
 
-engine = EngineAPI()
+engine = EngineAPI(os.environ.get('ENGINE_IP', 'localhost'))
