@@ -4,7 +4,7 @@ WORKDIR /root
 RUN git clone https://github.com/HyechurnJang/adun.git
 
 WORKDIR /root/adun
-RUN pip install --no-cache-dir -r xtra/docker/engine.requirements
+RUN pip install --no-cache-dir -r xtra/docker/resource/engine.requirements
 
 ENV MDB_IP mariadb
 ENV MDB_ROOT root
