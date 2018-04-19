@@ -8,6 +8,6 @@ RUN pip install --no-cache-dir -r xtra/docker/resource/webgui.requirements
 
 ENV IP 0.0.0.0
 ENV PORT 80
-ENV ENGINE_IP engine
+ENV ENGINE_IP adun_engine
 
 CMD [ "python manage.py runserver $IP:$PORT" ]

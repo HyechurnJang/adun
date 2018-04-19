@@ -14,7 +14,7 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--apic', help='APIC IP Address or Domain Name', required=True)
     parser.add_argument('-u', '--username', help='APIC User Name', required=True)
     parser.add_argument('-p', '--password', help='APIC Password', required=True)
-    parser.add_argument('-m', '--mariadb', default='mariadb', help='MariaDB IP Address or Domain Name')
+    parser.add_argument('-m', '--mariadb', default='adun_db', help='MariaDB IP Address or Domain Name')
     parser.add_argument('-r', '--mdbroot', default='root', help='MariaDB Super User Name')
     parser.add_argument('-s', '--mdbpass', default='1234Qwer', help='MariaDB Super Password')
     parser.add_argument('-q', '--quarantine', default='0', help='Default Quarantine VLan Number')
