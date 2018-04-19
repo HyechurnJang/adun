@@ -46,8 +46,7 @@ class MacIPForm(forms.Form):
 
 def main(request):
     return render(request, 'main.html', {
-        'epg_form' : EPGForm(),
-        'macip_form' : MacIPForm(),
+        'epg_setting' : EPGForm()
     })
 
 def topo(request, target, ident=None):
@@ -56,34 +55,43 @@ def topo(request, target, ident=None):
         elif target == 'ep': return JsonResponse({'data' : engine.getEPTopo(ident)})
     return redirect('main')
 
+# epg_ep_option_button = '''<span class="btn-epg-detail-macip-wrap"><div class="btn-group" role="group">%s%s</div></span>'''
+epg_ep_option_button = '''<span class="btn-epg-detail-macip-wrap">%s</span>'''
+mapped_button = '''<button type="button" class="btn btn-outline-info btn-epg-macip" onclick="createMacIP('%s','%s');">Allow</button>'''
+unmapped_button = '''<button type="button" class="btn btn-info btn-epg-macip" onclick="deleteMacIP(%d);">Deny</button>'''
 def epg_ep(request, ident):
     if request.method == 'GET':
         data = [[
+            'Blocked' if ep['blocked'] else 'Opened',
             ep['mac'],
             ep['ip'],
-            'Blocked' if ep['blocked'] else ' '
+            ep['name'],
+            epg_ep_option_button % (
+                unmapped_button % (ep['mapped']) if ep['mapped'] else mapped_button % (ep['mac'], ep['ip'])
+            )
         ] for ep in engine.getEP(epg_wn=ident)]
         return JsonResponse({'data' : data})
     return redirect('main')
 
 @csrf_exempt
 def epg_macip(request, ident, crud):
-    ret = False
+    result = False
+    
     if request.method == 'GET' and crud == 'read':
         option_button = '''
 <div class="btn-epg-detail-macip-wrap"><div class="btn-group" role="group">
-<button type="button" class="btn btn-outline-info btn-epg-update-macip" onclick="updateMacIP(%d);">
+<button type="button" class="btn btn-outline-info btn-epg-macip" onclick="updateMacIP(%d);">
 Update
 </button>
-<button type="button" class="btn btn-outline-danger btn-epg-delete-macip" onclick="deleteMacIP(%d);">
+<button type="button" class="btn btn-outline-danger btn-epg-macip" onclick="deleteMacIP(%d);">
 Delete
 </button>
 </div></div>
         '''
         data = [[
-            '<input type="text" class="input-epg-detail-macip" id="epg-update-macip-name-%d" value="%s">' % (macip['id'], macip['name']),
             '<input type="text" class="input-epg-detail-macip" id="epg-update-macip-mac-%d" value="%s">' % (macip['id'], macip['mac']),
             '<input type="text" class="input-epg-detail-macip" id="epg-update-macip-ip-%d" value="%s">' % (macip['id'], macip['ip']),
+            '<input type="text" class="input-epg-detail-macip" id="epg-update-macip-name-%d" value="%s">' % (macip['id'], macip['name']),
             option_button % (macip['id'], macip['id'])
         ] for macip in engine.getMacIP(epg_wn=ident)]
         return JsonResponse({'data' : data})
@@ -92,14 +100,17 @@ Delete
         form = MacIPForm(request.POST)
         if form.is_valid():
             if crud == 'create':
-                ret = engine.setMacIPwithWN(ident, form.macip_mac, form.macip_ip, form.macip_name)
+                try: result = engine.setMacIPwithWN(ident, form.macip_mac, form.macip_ip, form.macip_name)
+                except: result = False
             elif crud == 'update':
-                ret = engine.setMacIPwithID(int(ident), form.macip_mac, form.macip_ip, form.macip_name)
+                try: result = engine.setMacIPwithID(int(ident), form.macip_mac, form.macip_ip, form.macip_name)
+                except: result = False
     
     elif request.method == 'DELETE' and crud == 'delete':
-        ret = engine.delMacIP(int(ident))
+        try: result = engine.delMacIP(int(ident))
+        except: result = False
     
-    return JsonResponse({'data' : ret})
+    return JsonResponse({'result' : result})
 
 def epg_setting(request):
     if request.method == 'POST':

@@ -16,13 +16,13 @@
 			
 				<ul class="nav nav-tabs" role="tablist">
 					<li class="nav-item">
-						<a class="nav-link active" id="epg-ep-tab" data-toggle="tab" href="#epg-ep-details" role="tab" aria-controls="epg-ep-details" aria-selected="true">Endpoints</a>
+						<a class="nav-link active" id="epg-ep-tab" data-toggle="tab" href="#epg-ep-details" role="tab" aria-controls="epg-ep-details" aria-selected="true" onclick="refreshEPTable();">Endpoints</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="epg-macip-tab" data-toggle="tab" href="#epg-macip-details" role="tab" aria-controls="epg-ep-details" aria-selected="false">MAC & IP</a>
+						<a class="nav-link" id="epg-macip-tab" data-toggle="tab" href="#epg-macip-details" role="tab" aria-controls="epg-ep-details" aria-selected="false">Allow MAC & IP</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="epg-setting-tab" data-toggle="tab" href="#epg-setting" role="tab" aria-controls="epg-setting" aria-selected="false">Setting</a>
+						<a class="nav-link" id="epg-setting-tab" data-toggle="tab" href="#epg-setting" role="tab" aria-controls="epg-setting" aria-selected="false">EPG Setting</a>
 					</li>
 				</ul>
 				<div class="tab-content">
@@ -30,9 +30,11 @@
 						<table id="epg-ep-details-table" class="table table-sm table-striped table-bordered adun_table" width="100%">
 							<thead class="thead-dark">
 								<tr>
+									<th>Enforce</th>
 									<th>MAC</th>
 									<th>IP</th>
-									<th>Enforce</th>
+									<th>Name</th>
+									<th>Option</th>
 								</tr>
 							</thead>
 						</table>
@@ -41,9 +43,9 @@
 						<table id="epg-macip-details-table" class="table table-sm table-striped table-bordered adun_table" width="100%">
 							<thead class="thead-dark">
 								<tr>
-									<th>Name</th>
 									<th>MAC</th>
 									<th>IP</th>
+									<th>Name</th>
 									<th>Option</th>
 								</tr>
 							</thead>
@@ -54,7 +56,7 @@
 									<td><input type="text" class="input-epg-detail-macip" id="epg-create-macip-ip"/></td>
 									<td>
 									<div class="btn-epg-detail-macip-wrap">
-									<button type="button" class="btn btn-outline-success btn-epg-create-macip" onclick="createMacIP();">Add</button>
+									<button type="button" class="btn btn-outline-success btn-epg-macip" style="width:12em;" onclick="createMacIP();">Add</button>
 									</div>
 									</td>
 								</tr>
@@ -64,16 +66,16 @@
 					<div class="tab-pane fade" id="epg-setting" role="tabpanel" aria-labelledby="epg-setting-tab">
 						<form method="post" action="{% url 'epg_setting' %}">
 							{% csrf_token %}
-							{{ epg_form.epg_id }}
+							{{ epg_setting.epg_id }}
 							<div class="container-fluid epg-qvlan-wrap">
 								<label>Quarantine Vlan</label>
-								{{ epg_form.epg_qvlan }}
+								{{ epg_setting.epg_qvlan }}
 							</div>
 							<div class="container-fluid epg-enforce-wrap">
 								<label>Enforcement</label>
 								<span>
 									<label class="slide-switch" for="id_epg_ac">
-						    			{{ epg_form.epg_ac }}
+						    			{{ epg_setting.epg_ac }}
 										<div class="slide-box round"></div>
 									</label>
 								</span>
@@ -149,93 +151,83 @@ var diagonal = null;
 var vis = null;
 var curr_epg = null;
 
-function createMacIP() {
-	$.ajax({
-		type: "POST",
-		url: "/detail/epg/macip/" + curr_epg.wn + "/create/",
-		dataType: "json",
-		data: {
-			macip_name: $("#epg-create-macip-name").val(),
-			macip_mac: $("#epg-create-macip-mac").val(),
-			macip_ip: $("#epg-create-macip-ip").val(),
-		},
-		success : function(data) {
-			if (data.error) { window.alert("Add MAC & IP Failed!"); }
-			else {
-				$("#epg-macip-details-table").DataTable({
-					ajax: "/detail/epg/macip/" + curr_epg.wn + "/read/",
-					destroy: true,
-				});
+function refreshTable(id, url) {
+	$("#" + id).DataTable({
+		ajax: url,
+		scrollX: false,
+		deferRender: true,
+		destroy: true,
+	});
+}
+
+var to_obj = null;
+function refreshAutoEPTopo() {
+	if (curr_epg && !curr_epg.menu) {
+		$.ajax({
+			type: "GET",
+			url: "/topo/ep/" + curr_epg.wn + "/",
+			dataType: "json",
+			success : function(data) {
+				if (curr_epg && !curr_epg.menu) {
+					curr_epg.children = data.data;
+					curr_epg.epcount = curr_epg.children.length;
+					update(curr_epg);
+					if (to_obj) {
+						clearTimeout(to_obj);
+						to_obj = null;
+					}
+					to_obj = setTimeout(function() { refreshAutoEPTopo(); }, 5000);
+				} else {
+					if (to_obj) {
+						clearTimeout(to_obj);
+						to_obj = null;
+					}
+				}
+			},
+			error : function(xhr, status, thrown) {
+				window.alert("Error!");
+				window.location.replace("/");
 			}
+		});
+	} else {
+		if (to_obj) {
+			clearTimeout(to_obj);
+			to_obj = null;
+		}
+	}
+}
+
+function refreshEPTopo() {
+	$.ajax({
+		type: "GET",
+		url: "/topo/ep/" + curr_epg.wn + "/",
+		dataType: "json",
+		success : function(data) {
+			curr_epg.children = data.data;
+			curr_epg.epcount = curr_epg.children.length;
+			update(curr_epg);
 		},
-		error : function(error) {
-			window.alert("Add MAC & IP Failed!");
-		},
-		complete : function() {
-			$("#epg-create-macip-name").val("");
-			$("#epg-create-macip-mac").val("");
-			$("#epg-create-macip-ip").val("");
+		error : function(xhr, status, thrown) {
+			window.alert("Error!");
+			window.location.replace("/");
 		}
 	});
 }
 
-function updateMacIP(id) {
-	$.ajax({
-		type: "POST",
-		url: "/detail/epg/macip/" + id + "/update/",
-		dataType: "json",
-		data: {
-			macip_name: $("#epg-update-macip-name-" + id).val(),
-			macip_mac: $("#epg-update-macip-mac-" + id).val(),
-			macip_ip: $("#epg-update-macip-ip-" + id).val(),
-		},
-		success : function(data) {
-			if (data.error) { window.alert("Update MAC & IP Failed!"); }
-			else {
-				$("#epg-macip-details-table").DataTable({
-					ajax: "/detail/epg/macip/" + curr_epg.wn + "/read/",
-					destroy: true,
-				});
-			}
-		},
-		error : function(error) {
-			window.alert("Update MAC & IP Failed!");
-		}
-	});
+function refreshEPTable() {
+	refreshTable("epg-ep-details-table", "/detail/epg/ep/" + curr_epg.wn + "/");
 }
 
-function deleteMacIP(id) {
-	$.ajax({
-		type: "DELETE",
-		url: "/detail/epg/macip/" + id + "/delete/",
-		dataType: "json",
-		success : function(data) {
-			if (data.error) { window.alert("Delete MAC & IP Failed!"); }
-			else {
-				$("#epg-macip-details-table").DataTable({
-					ajax: "/detail/epg/macip/" + curr_epg.wn + "/read/",
-					destroy: true,
-				});
-			}
-		},
-		error : function(error) {
-			window.alert("Delete MAC & IP Failed!");
-		}
-	});
+function refreshMacIPTable() {
+	refreshTable("epg-macip-details-table", "/detail/epg/macip/" + curr_epg.wn + "/read/");
 }
 
 function showEPGDetail(epg) {
 	curr_epg = epg;
-	$("#epg-ep-details-table").DataTable({
-		ajax: "/detail/epg/ep/" + epg.wn + "/",
-		destroy: true,
-	});
-	$("#epg-macip-details-table").DataTable({
-		ajax: "/detail/epg/macip/" + epg.wn + "/read/",
-		destroy: true,
-	});
+	refreshEPTable();
+	refreshMacIPTable();
 	$("#epg-detail-panel-title").html("<strong>" + epg.name + " Details</strong>");
-	$("#id_epg_id").val(epg.id);
+	$("#id_epg_id").val(epg._id);
 	$("#id_epg_qvlan").val(epg.qvlan);
 	if (epg.ac) {
 		$("#id_epg_ac").prop("checked", true);
@@ -253,6 +245,115 @@ function hideEPGDetail() {
 	curr_epg.menu = false;
 	curr_epg.children = null;
 	update(curr_epg);
+}
+
+function createMacIP(mac, ip) {
+	if (mac && ip) {
+		var data = {
+			macip_mac: mac,
+			macip_ip: ip,
+		};
+		var complete = function() {};
+	} else {
+		var data = {
+			macip_name: $("#epg-create-macip-name").val(),
+			macip_mac: $("#epg-create-macip-mac").val(),
+			macip_ip: $("#epg-create-macip-ip").val(),
+		};
+		var complete = function() {
+			$("#epg-create-macip-name").val("");
+			$("#epg-create-macip-mac").val("");
+			$("#epg-create-macip-ip").val("");
+		};
+	}
+	$.ajax({
+		type: "POST",
+		url: "/detail/epg/macip/" + curr_epg.wn + "/create/",
+		dataType: "json",
+		data: data,
+		success : function(data) {
+			if (!data.result) { window.alert("Add MAC & IP Failed!"); }
+			else {
+				refreshEPTable();
+				refreshMacIPTable();
+			}
+		},
+		error : function(error) { window.alert("Add MAC & IP Failed!"); },
+		complete : complete
+	});
+}
+
+function blockMacIP(id) {
+	
+	console.log('delete', id);
+	
+	$.ajax({
+		type: "DELETE",
+		url: "/detail/epg/macip/" + id + "/delete/",
+		dataType: "json",
+		success : function(data) {
+			if (!data.result) { window.alert("Delete MAC & IP Failed!"); }
+			else { refreshEPTopo(); }
+		},
+		error : function(error) { window.alert("Delete MAC & IP Failed!"); }
+	});
+}
+
+function unblockMacIP(mac, ip) {
+	$.ajax({
+		type: "POST",
+		url: "/detail/epg/macip/" + curr_epg.wn + "/create/",
+		dataType: "json",
+		data: {
+			macip_mac: mac,
+			macip_ip: ip,
+		},
+		success : function(data) {
+			if (!data.result) { window.alert("Add MAC & IP Failed!"); }
+			else { refreshEPTopo(); }
+		},
+		error : function(error) { window.alert("Add MAC & IP Failed!"); },
+	});
+}
+
+function updateMacIP(id) {
+	$.ajax({
+		type: "POST",
+		url: "/detail/epg/macip/" + id + "/update/",
+		dataType: "json",
+		data: {
+			macip_name: $("#epg-update-macip-name-" + id).val(),
+			macip_mac: $("#epg-update-macip-mac-" + id).val(),
+			macip_ip: $("#epg-update-macip-ip-" + id).val(),
+		},
+		success : function(data) {
+			if (!data.result) { window.alert("Update MAC & IP Failed!"); }
+			else {
+				refreshEPTable();
+				refreshMacIPTable();
+			}
+		},
+		error : function(error) { window.alert("Update MAC & IP Failed!"); }
+	});
+}
+
+function deleteMacIP(id) {
+	
+	console.log('delete', id);
+	
+	$.ajax({
+		type: "DELETE",
+		url: "/detail/epg/macip/" + id + "/delete/",
+		dataType: "json",
+		success : function(data) {
+			if (!data.result) { window.alert("Delete MAC & IP Failed!"); }
+			else {
+				refreshEPTable();
+				refreshMacIPTable();
+			}
+		},
+		error : function(error) { window.alert("Delete MAC & IP Failed!"); }
+	});
 }
 
 function showACIDetail() {
@@ -311,22 +412,7 @@ function actionClickEPG(epg) {
 			epg.children = null;
 			curr_epg = null;
 			update(epg);
-		} else {
-			$.ajax({
-				type: "GET",
-				url: "/topo/ep/" + epg.wn + "/",
-				dataType: "json",
-				success : function(data) {
-					epg.children = data.data;
-					epg.epcount = epg.children.length;
-					update(epg);
-				},
-				error : function(xhr, status, thrown) {
-					window.alert("Error!");
-					window.location.replace("/");
-				}
-			});
-		}
+		} else { refreshAutoEPTopo(); }
 	} else {
 		epg.children = null;
 		epg.menu = false;
@@ -348,7 +434,9 @@ function update(source) {
 	var nodes = tree.nodes(root).reverse();
 	nodes.forEach(function(d) { d.y = (width / 4) * d.depth; });
 	var node = vis.selectAll("g.node")
-		.data(nodes, function(d) { return d.id || (d.id = "topo-node-" + ++index); });
+		.data(nodes, function(d) {
+			return d.id || (d.id = "topo-node-" + ++index);
+		});
 	
 	// Define Action
 	var nodeEnter = node.enter().append("svg:g")
@@ -362,6 +450,12 @@ function update(source) {
 			} else if (d.type == "aci") {
 				d3.select(this).moveToFront();
 				actionContextACI(d);
+			} else if (d.type == "ep") {
+				if (d.mapped) {
+					blockMacIP(d.mapped);
+				} else {
+					unblockMacIP(d.mac, d.ip);
+				}
 			} else {
 				toggle(d);
 				update(d);
@@ -429,8 +523,9 @@ function update(source) {
 		.style("stroke", function(d) {
 			if (d.type == "epg" && d.ac) {
 				return "crimson";
-			} else if (d.type == "ep" && d.blocked) {
-				return "crimson";
+			} else if (d.type == "ep") {
+				if (d.blocked) { return "crimson"; }
+				else if (d.mapped) { return "#28a745"; }
 			}
 			return "steelblue";
 		});
@@ -659,19 +754,7 @@ path.link {
 	width: 100%;
 	text-align: center;
 }
-.btn-epg-create-macip {
-	width: 12em;
-	padding: 0.18em 0.18em;
-	font-size: 1em;
-}
-
-.btn-epg-update-macip {
-	width: 6em;
-	padding: 0.18em 0.18em;
-	font-size: 1em;
-}
-
-.btn-epg-delete-macip {
+.btn-epg-macip {
 	width: 6em;
 	padding: 0.18em 0.18em;
 	font-size: 1em;

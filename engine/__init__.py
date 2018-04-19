@@ -45,16 +45,44 @@ def set_epg(req, id=None, epg_wn=None):
 @rest('GET', '/ep')
 def get_ep(req, id=None, epg_wn=None):
     try:
-        if id != None: return EP.get(int(id)).toDict()
+        if id != None:
+            ep = EP.get(int(id))
+            ep_data = ep.toDict()
+            if ep.epg_dn in tracker.macips and ep.mac in tracker.macips[ep.epg_dn]:
+                macip = tracker.macips[ep.epg_dn][ep.mac]
+                ep_data['name'] = macip.name
+                ep_data['mapped'] = macip.id
+            else:
+                ep_data['name'] = ''
+                ep_data['mapped'] = 0
+            return ep_data
         else:
             result = []
             if epg_wn != None:
                 epg_dn = changeWNtoDN(epg_wn)
                 if epg_dn in tracker.eps:
-                    for ep in tracker.eps[epg_dn].values(): result.append(ep.toDict())
+                    for ep in tracker.eps[epg_dn].values():
+                        ep_data = ep.toDict()
+                        if ep.epg_dn in tracker.macips and ep.mac in tracker.macips[ep.epg_dn]:
+                            macip = tracker.macips[ep.epg_dn][ep.mac]
+                            ep_data['name'] = macip.name
+                            ep_data['mapped'] = macip.id
+                        else:
+                            ep_data['name'] = ''
+                            ep_data['mapped'] = 0
+                        result.append(ep_data)
             else:
                 for epg in tracker.eps.values():
-                    for ep in epg.values(): result.append(ep.toDict())
+                    for ep in epg.values():
+                        ep_data = ep.toDict()
+                        if ep.epg_dn in tracker.macips and ep.mac in tracker.macips[ep.epg_dn]:
+                            macip = tracker.macips[ep.epg_dn][ep.mac]
+                            ep_data['name'] = macip.name
+                            ep_data['mapped'] = macip.id
+                        else:
+                            ep_data['name'] = ''
+                            ep_data['mapped'] = 0
+                        result.append(ep_data)
             return result
     except Exception as e: return {'error', str(e)}
 
@@ -128,9 +156,10 @@ def get_epg_topology(req):
             ap_data = {'name' : ap_name, 'type' : 'ap', 'children' : ap_children}
             for epg_name, epg in ap.items():
                 epg_data = {
-                    'name' : epg_name,
+                    '_id' : epg.id,
+                    'id' : 'topo-epg-%d' % epg.id,
                     'type' : 'epg',
-                    'id' : epg.id,
+                    'name' : epg_name,
                     'dn' : epg.dn,
                     'wn' : changeDNtoWN(epg.dn),
                     'ac' : epg.ac,
@@ -149,9 +178,17 @@ def get_ep_topology(req, epg_wn):
     result = []
     epg_dn = changeWNtoDN(epg_wn)
     if epg_dn in tracker.eps:
-        for ep in tracker.eps[epg_dn].values(): result.append({
-            'name' : '%s / %s' % (ep.mac, ep.ip),
-            'type' : 'ep',
-            'blocked' : ep.blocked
-        })
+        for ep in tracker.eps[epg_dn].values():
+            ep_data = ep.toDict()
+            if ep.epg_dn in tracker.macips and ep.mac in tracker.macips[ep.epg_dn]:
+                macip = tracker.macips[ep.epg_dn][ep.mac]
+                ep_data['name'] = '[%s] %s / %s' % (macip.name, ep.mac, ep.ip) if macip.name else '%s / %s' % (ep.mac, ep.ip)
+                ep_data['mapped'] = macip.id
+            else:
+                ep_data['name'] = '%s / %s' % (ep.mac, ep.ip)
+                ep_data['mapped'] = 0
+            ep_data['_id'] = ep_data['id']
+            ep_data['id'] = 'topo-ep-%d' % ep_data['id']
+            ep_data['type'] = 'ep'
+            result.append(ep_data)
     return result
