@@ -1,5 +1,9 @@
 #!/bin/bash
 
+sudo apt install docker.io -y
+sudo systemctl enable docker
+sudo systemctl restart docker
+
 echo "Build Database"
 sudo docker build -t adun/db:latest -f ./resource/database.docker .
 echo ""
